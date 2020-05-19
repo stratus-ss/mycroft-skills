@@ -52,34 +52,24 @@ SpeechRequest = namedtuple('SpeechRequest', ["utterance", "args", "kwargs"])
 
 class TrackedIoTRequest():
 
-    def __init__(self, id, status):
-
-    #def __init__(
-    #        self,
-    #        id: str,
-    #        status: IoTRequestStatus = IoTRequestStatus.POLLING,
-    #):
+    def __init__(self, id, status = IoTRequestStatus.POLLING):
         self.id = id
         self.status = status
         self.candidates = []
-        #self.speech_requests: DefaultDict[str, List[SpeechRequest]] = defaultdict(list)
-        self.speech_requests = {} 
+        self.speech_requests = {}
 
 
 class SkillIoTControl(MycroftSkill):
 
     def __init__(self):
         MycroftSkill.__init__(self)
-        #self._current_requests: Dict[str, TrackedIoTRequest] = dict()
         self._current_requests = {}
-        #self._normalized_to_orignal_word_map: Dict[str, str] = dict()
         self._normalized_to_orignal_word_map = {}
 
     @property
     def response_timeout(self):
         return self.settings.get('response_timeout')
 
-    #def _handle_speak(self, message: Message):
     def _handle_speak(self, message):
         iot_request_id = message.data.get(IOT_REQUEST_ID)
 
@@ -111,39 +101,39 @@ class SkillIoTControl(MycroftSkill):
         self.bus.emit(Message(_BusKeys.CALL_FOR_REGISTRATION, {}))
 
         intent = (IntentBuilder('IoTRequestWithEntityOrThing')
-                    .one_of('ENTITY', *_THINGS)
-                    .one_of(*_NON_QUERY_ACTIONS)
-                    .optionally('SCENE')
-                    .optionally('TO')
-                    .build())
+                  .one_of('ENTITY', *_THINGS)
+                  .one_of(*_NON_QUERY_ACTIONS)
+                  .optionally('SCENE')
+                  .optionally('TO')
+                  .build())
         self.register_intent(intent, self._handle_iot_request)
 
         intent = (IntentBuilder('IoTRequestWithEntityAndThing')
-                    .require('ENTITY')
-                    .one_of(*_THINGS)
-                    .one_of(*_NON_QUERY_ACTIONS)
-                    .optionally('SCENE')
-                    .optionally('TO')
-                    .build())
+                  .require('ENTITY')
+                  .one_of(*_THINGS)
+                  .one_of(*_NON_QUERY_ACTIONS)
+                  .optionally('SCENE')
+                  .optionally('TO')
+                  .build())
         self.register_intent(intent, self._handle_iot_request)
 
         intent = (IntentBuilder('IoTRequestWithEntityOrThingAndAttribute')
-                    .one_of('ENTITY', *_THINGS)
-                    .one_of(*_NON_QUERY_ACTIONS)
-                    .one_of(*_ATTRIBUTES)
-                    .optionally('SCENE')
-                    .optionally('TO')
-                    .build())
+                  .one_of('ENTITY', *_THINGS)
+                  .one_of(*_NON_QUERY_ACTIONS)
+                  .one_of(*_ATTRIBUTES)
+                  .optionally('SCENE')
+                  .optionally('TO')
+                  .build())
         self.register_intent(intent, self._handle_iot_request)
 
         intent = (IntentBuilder('IoTRequestWithEntityAndThingAndAttribute')
-                    .require('ENTITY')
-                    .one_of(*_THINGS)
-                    .one_of(*_NON_QUERY_ACTIONS)
-                    .one_of(*_ATTRIBUTES)
-                    .optionally('SCENE')
-                    .optionally('TO')
-                    .build())
+                  .require('ENTITY')
+                  .one_of(*_THINGS)
+                  .one_of(*_NON_QUERY_ACTIONS)
+                  .one_of(*_ATTRIBUTES)
+                  .optionally('SCENE')
+                  .optionally('TO')
+                  .build())
         self.register_intent(intent, self._handle_iot_request)
 
         intent = (IntentBuilder('IoTRequestScene')
@@ -153,16 +143,15 @@ class SkillIoTControl(MycroftSkill):
         self.register_intent(intent, self._handle_iot_request)
 
         intent = (IntentBuilder('IoTRequestStateQuery')
-                    .one_of(*_QUERY_ACTIONS)
-                    .one_of(*_THINGS, 'ENTITY')
-                    .one_of(*_STATES, *_ATTRIBUTES)
-                    .build())
+                  .one_of(*_QUERY_ACTIONS)
+                  .one_of(*_THINGS, 'ENTITY')
+                  .one_of(*_STATES, *_ATTRIBUTES)
+                  .build())
         self.register_intent(intent, self._handle_iot_request)
 
     def stop(self):
         pass
 
-    #def _handle_response(self, message: Message):
     def _handle_response(self, message):
         id = message.data.get(IOT_REQUEST_ID)
         if not id:
@@ -176,7 +165,6 @@ class SkillIoTControl(MycroftSkill):
             return
         self._current_requests[id].candidates.append(message)
 
-    #def _register_words(self, message: Message):
     def _register_words(self, message):
         type = message.data["type"]
         words = message.data["words"]
@@ -188,7 +176,6 @@ class SkillIoTControl(MycroftSkill):
                 self._normalized_to_orignal_word_map[normalized] = word
                 self.register_vocabulary(normalized, type)
 
-    #def _run(self, message: Message):
     def _run(self, message):
         id = message.data.get(IOT_REQUEST_ID)
         request = self._current_requests.get(id)
@@ -212,7 +199,6 @@ class SkillIoTControl(MycroftSkill):
                                 data={IOT_REQUEST_ID: id},
                                 name="SpeakOrAcknowledge")
 
-    #def _speak_or_acknowledge(self, message: Message):
     def _speak_or_acknowledge(self, message):
         id = message.data.get(IOT_REQUEST_ID)
         request = self._current_requests.get(id)
@@ -230,7 +216,6 @@ class SkillIoTControl(MycroftSkill):
                              speech_requests=request.speech_requests,
                              skill_id=skill_id))
 
-    #def _delete_request(self, message: Message):
     def _delete_request(self, message):
         id = message.data.get(IOT_REQUEST_ID)
         LOG.info("Delete request {id}".format(id=id))
@@ -239,19 +224,18 @@ class SkillIoTControl(MycroftSkill):
         except KeyError:
             pass
 
-    #def _pick_winners(self, candidates: List[Message]):
-    def _pick_winners(self, candidates):
+    @staticmethod
+    def _pick_winners(candidates):
         # TODO - make this actually pick winners
         return candidates
 
-    #def _get_enum_from_data(self, enum_class, data: dict):
-    def _get_enum_from_data(self, enum_class, data):
+    @staticmethod
+    def _get_enum_from_data(enum_class, data):
         for e in enum_class:
             if e.name in data:
                 return e
         return None
 
-    #def _handle_iot_request(self, message: Message):
     def _handle_iot_request(self, message):
         id = str(uuid4())
         message.data[IOT_REQUEST_ID] = id
@@ -302,15 +286,6 @@ class SkillIoTControl(MycroftSkill):
                             data={IOT_REQUEST_ID: id},
                             name="RunIotRequest")
 
-    #def _trigger_iot_request(self, data: dict,
-    #                         action: Action,
-    #                         thing: Thing=None,
-    #                         attribute: Attribute=None,
-    #                         entity: str=None,
-    #                         scene: str=None,
-    #                         value: int=None,
-    #                         state: State=None):
-
     def _trigger_iot_request(self, data, action, thing, attribute,
                              entity, scene, value, state):
         LOG.info('state is {}'.format(state))
@@ -330,15 +305,14 @@ class SkillIoTControl(MycroftSkill):
 
         self.bus.emit(Message(_BusKeys.TRIGGER, data))
 
-    #def _set_context(self, thing: Thing, entity: str, data: dict):
     def _set_context(self, thing, entity, data):
         if thing:
             self.set_context(thing.name, data[thing.name])
         if entity:
             self.set_context('ENTITY', entity)
 
-    #def _clean_power_request(self, data: dict) -> dict:
-    def _clean_power_request(self, data):
+    @staticmethod
+    def _clean_power_request(data):
         """
         Clean requests that include a toggle word and a definitive value.
 
@@ -357,15 +331,13 @@ class SkillIoTControl(MycroftSkill):
         return data
 
 
-#def _normalize_custom_word(word: str, to_space: str = '_-') -> str:
-def _normalize_custom_word(word, to_space = '_-'):
+def _normalize_custom_word(word, to_space='_-'):
     word = word.lower()
     letters = list(word)
     for index, letter in enumerate(letters):
         if letter in to_space:
             letters[index] = ' '
     return ''.join(letters)
-
 
 
 def create_skill():
